@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+
+<launch>
+  <!-- <arg name="world" default="worlds/empty.world"/> -->
+
+  <arg name="world" default="$(find dji_m100_gazebo)/worlds/obstacle_aovid.world"/>
+
+  <arg name="is_hitl_model" default="true"/>
+
+  <arg name="gui" default="true"/>
+  <arg name="verbose" default="false"/>
+  <arg unless="$(arg verbose)" name="args" value=""/>
+  <arg     if="$(arg verbose)" name="args" value="--verbose"/>
+
+  <param name="/use_sim_time" value="true" />
+
+  <node name="gazebo" pkg="gazebo_ros" type="gzserver" args="$(arg world) $(arg args)" respawn="false" output="screen"/>
+
+  <!-- start gui -->
+  <group if="$(arg gui)">
+    <node name="gazebo_gui" pkg="gazebo_ros" type="gzclient" respawn="false" output="screen" args="$(arg args)"/>
+  </group>
+
+  <!-- spawn a dji m100 model in gazebo -->
+  <include file="$(find dji_m100_gazebo)/launch/spawn_dji_m100.launch">
+    <!-- initial position of dji m100 in gazebo -->
+  	<arg name="x" default="1.0"/>
+  	<arg name="y" default="1.0"/>
+  	<arg name="z" default="1.0"/>
+    <!-- Use gazebo plugin -->
+    <arg name="is_hitl_model" default="$(arg is_hitl_model)"/>
+  </include>
+
+  <group unless="$(arg is_hitl_model)">
+      <!-- establish the bridge between pc simulator and gazebo -->
+      <node pkg="dji_m100_gazebo" type="dji_m100_pcsim_gazebo_bridge" name="dji_m100_pcsim_gazebo_bridge"/>
+  </group>
+
+  <node ns="guidance_front" pkg="stereo_image_proc" type="stereo_image_proc" name="stereo_image_proc" args="_approximate_sync:=True"/>
+
+  <arg name="camera" default="guidance_front" />
+  <node pkg="pointcloud_to_laserscan" type="pointcloud_to_laserscan_node" name="pointcloud_to_laserscan">
+
+      <remap from="cloud_in" to="$(arg camera)/points2"/>
+      <remap from="scan" to="$(arg camera)/scan"/>
+      <rosparam>
+          transform_tolerance: 0.01
+          min_height: -5.0
+          max_height: 5.0
+
+          angle_min: -1.5708 # -M_PI/2
+          angle_max: 1.5708 # M_PI/2
+          angle_increment: 0.0087 # M_PI/360.0
+          scan_time: 0.3333
+          range_min: 0.45
+          range_max: 10.0
+          use_inf: true
+          target_frame: base_link
+          concurrency_level: 1
+      </rosparam>
+
+  </node>
+</launch>

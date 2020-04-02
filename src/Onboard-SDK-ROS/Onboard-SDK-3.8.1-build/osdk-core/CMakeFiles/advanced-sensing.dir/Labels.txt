@@ -1,0 +1,13 @@
+# Target labels
+ advanced-sensing
+# Source files and their labels
+/home/aaronguan/Matrice100_ws/src/Onboard-SDK-ROS/Onboard-SDK-3.8.1-build/osdk-core/CMakeFiles/advanced-sensing
+/home/aaronguan/Matrice100_ws/src/Onboard-SDK-ROS/Onboard-SDK-3.8.1-build/osdk-core/CMakeFiles/advanced-sensing.rule
+/home/aaronguan/Matrice100_ws/src/Onboard-SDK-ROS/Onboard-SDK-3.8.1-build/osdk-core/CMakeFiles/advanced-sensing-complete.rule
+/home/aaronguan/Matrice100_ws/src/Onboard-SDK-ROS/Onboard-SDK-3.8.1-build/osdk-core/advanced-sensing-prefix/src/advanced-sensing-stamp/advanced-sensing-install.rule
+/home/aaronguan/Matrice100_ws/src/Onboard-SDK-ROS/Onboard-SDK-3.8.1-build/osdk-core/advanced-sensing-prefix/src/advanced-sensing-stamp/advanced-sensing-mkdir.rule
+/home/aaronguan/Matrice100_ws/src/Onboard-SDK-ROS/Onboard-SDK-3.8.1-build/osdk-core/advanced-sensing-prefix/src/advanced-sensing-stamp/advanced-sensing-download.rule
+/home/aaronguan/Matrice100_ws/src/Onboard-SDK-ROS/Onboard-SDK-3.8.1-build/osdk-core/advanced-sensing-prefix/src/advanced-sensing-stamp/advanced-sensing-update.rule
+/home/aaronguan/Matrice100_ws/src/Onboard-SDK-ROS/Onboard-SDK-3.8.1-build/osdk-core/advanced-sensing-prefix/src/advanced-sensing-stamp/advanced-sensing-patch.rule
+/home/aaronguan/Matrice100_ws/src/Onboard-SDK-ROS/Onboard-SDK-3.8.1-build/osdk-core/advanced-sensing-prefix/src/advanced-sensing-stamp/advanced-sensing-configure.rule
+/home/aaronguan/Matrice100_ws/src/Onboard-SDK-ROS/Onboard-SDK-3.8.1-build/osdk-core/advanced-sensing-prefix/src/advanced-sensing-stamp/advanced-sensing-build.rule

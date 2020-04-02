@@ -1,0 +1,22 @@
+<launch>  
+    
+    <node pkg="guidance" type="guidanceNodeCalibration" name="guidanceNodeCalibration">
+		<param name="front_cam_left_param_file" value="$(find guidance)/calibration_files/front_cam_param/left.yaml" />
+		<param name="front_cam_right_param_file" value="$(find guidance)/calibration_files/front_cam_param/right.yaml" />
+		<param name="left_cam_left_param_file" value="$(find guidance)/calibration_files/left_cam_param/left.yaml" />
+		<param name="left_cam_right_param_file" value="$(find guidance)/calibration_files/left_cam_param/right.yaml" />
+		<param name="right_cam_left_param_file" value="$(find guidance)/calibration_files/right_cam_param/left.yaml" />
+		<param name="right_cam_right_param_file" value="$(find guidance)/calibration_files/right_cam_param/right.yaml" />
+		<param name="rear_cam_left_param_file" value="$(find guidance)/calibration_files/rear_cam_param/left.yaml" />
+		<param name="rear_cam_right_param_file" value="$(find guidance)/calibration_files/rear_cam_param/right.yaml" />
+    </node>
+
+    <node ns="guidance_front" pkg="stereo_image_proc" type="stereo_image_proc" name="stereo_image_proc" args="_approximate_sync:=True"/>
+    <node ns="guidance_rear" pkg="stereo_image_proc" type="stereo_image_proc" name="stereo_image_proc" args="_approximate_sync:=True"/>
+    <node ns="guidance_left" pkg="stereo_image_proc" type="stereo_image_proc" name="stereo_image_proc" args="_approximate_sync:=True"/>
+    <node ns="guidance_right" pkg="stereo_image_proc" type="stereo_image_proc" name="stereo_image_proc" args="_approximate_sync:=True"/>
+
+    <node pkg="odom" type="odom" name="odom" output="screen"/>
+    
+    <node pkg="base_controller" type="base_controller" name="base_controller" output="screen"/>
+</launch>
