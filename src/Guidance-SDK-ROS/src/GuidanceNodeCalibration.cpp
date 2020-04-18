@@ -395,7 +395,7 @@ int main(int argc, char** argv)
                 CAMERA_ID = (e_vbus_index) i;
                 frame_id = "guidance_" + cam_position[CAMERA_ID];
                 if (i == 0){
-                  transform.setOrigin( tf::Vector3(0.0, 0, -0.1) );
+                  transform.setOrigin( tf::Vector3(0.0, 0.0, -0.1) );
                   transform.setRotation( tf::Quaternion(1, 0, 0, 0) );
                   br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "base_link", frame_id));
                 }
@@ -412,8 +412,11 @@ int main(int argc, char** argv)
                 else if (i == 3){
                   transform.setOrigin( tf::Vector3(0.0, -0.1, 0.0) );
                   transform.setRotation( tf::Quaternion( 0.0005631, -0.7071065, 0.7071066, 0.0005631) );
-                  // transform.setRotation( tf::Quaternion( 0.0005631, -0.7071065, 0.7071066, 0.0005631) );
                   br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "base_link", frame_id));
+
+                  transform.setOrigin( tf::Vector3(0.13, 0.0, 0.0) );
+                  transform.setRotation( tf::Quaternion( 0.0, 0.0, 0.0, 1.0) );
+                  br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), frame_id, "guidance_rear_right"));
                 }
                 else if (i == 4){
                   transform.setOrigin( tf::Vector3(-0.1, 0.0, 0.0) );

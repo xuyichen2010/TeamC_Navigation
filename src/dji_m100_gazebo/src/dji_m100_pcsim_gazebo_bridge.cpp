@@ -48,9 +48,7 @@ int main(int argc, char **argv)
       target_model_state.model_name = model_name;
       target_model_state.reference_frame = reference_frame;
       target_model_state.pose = target_pose;
-      ROS_INFO_STREAM(target_pose);
       target_model_state.twist = target_twist;
-      ROS_INFO_STREAM(target_twist);
       set_model_state.request.model_state = target_model_state;
       model_state_client.call(set_model_state);
     }

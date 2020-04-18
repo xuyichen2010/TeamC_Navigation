@@ -76,8 +76,5 @@ add_executable(guidanceNodeCalibration
   src/GuidanceNodeCalibration.cpp
   src/DJI_utility.cpp)
 
-add_executable(guidanceNodeCalibration_backup
-  src/GuidanceNodeCalibration_backup.cpp
-  src/DJI_utility.cpp)
 #target_link_libraries( guidanceNodeCalibration ${OpenCV_LIBS} ${catkin_LIBRARIES})
 #  vim: set et fenc=utf-8 ff=unix sts=0 sw=2 ts=2 :

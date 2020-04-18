@@ -8,6 +8,8 @@
 	<xacro:dji_m100_base_macro/>
 	<xacro:include filename="$(find dji_m100_description)/urdf/guidance.urdf.xacro" />
     <xacro:dji_m100_guidance_macro/>
+    <xacro:include filename="$(find dji_m100_description)/urdf/lidar.urdf.xacro" />
+    <xacro:lidar_macro/>
     <!--<xacro:include filename="$(find dji_m100_description)/urdf/gimbal.urdf.xacro" />-->
     <!--<xacro:dji_m100_gimbal />-->
 </robot>

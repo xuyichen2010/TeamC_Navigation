@@ -20,6 +20,8 @@
 #include <dji_sdk/QueryDroneVersion.h>
 
 
+
+
 bool set_local_position();
 
 void cmd_vel_callback(const geometry_msgs::Twist::ConstPtr& msg);

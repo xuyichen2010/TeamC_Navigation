@@ -3,7 +3,7 @@
 <launch>
   <!-- <arg name="world" default="worlds/empty.world"/> -->
 
-  <arg name="world" default="$(find dji_m100_gazebo)/worlds/obstacle_aovid.world"/>
+  <arg name="world" default="$(find dji_m100_gazebo)/worlds/straight_line.world"/>
 
   <arg name="is_hitl_model" default="true"/>
 
@@ -31,10 +31,6 @@
     <arg name="is_hitl_model" default="$(arg is_hitl_model)"/>
   </include>
 
-  <group unless="$(arg is_hitl_model)">
-      <!-- establish the bridge between pc simulator and gazebo -->
-      <node pkg="dji_m100_gazebo" type="dji_m100_pcsim_gazebo_bridge" name="dji_m100_pcsim_gazebo_bridge"/>
-  </group>
 
   <node ns="guidance_front" pkg="stereo_image_proc" type="stereo_image_proc" name="stereo_image_proc" args="_approximate_sync:=True"/>
 
@@ -59,5 +55,12 @@
           concurrency_level: 1
       </rosparam>
 
+  </node>
+
+  <node pkg="odom" type="odom" name="odom" output="screen"/>
+
+  <node pkg="imu_attitude_to_tf" type="imu_attitude_to_tf_node" name="imu_attitude_to_tf_node" output="screen">
+    <param name="base_stabilized_frame" type="string" value="base_stabilized" />
+    <param name="base_frame" type="string" value="base_link" />
   </node>
 </launch>

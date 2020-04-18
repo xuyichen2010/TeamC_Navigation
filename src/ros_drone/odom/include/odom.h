@@ -23,6 +23,7 @@
 #include <tf/transform_broadcaster.h>
 #include <nav_msgs/Odometry.h>
 
+bool set_local_position();
 
 void extract_yaw(geometry_msgs::Quaternion& q);
 

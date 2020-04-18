@@ -21,19 +21,19 @@ int main(int argc, char** argv) {
   ros::init(argc, argv, "odom_node");
   ros::NodeHandle nh;
   // Subscribe to messages from dji_sdk_node
-  ros::Subscriber attitudeSub = nh.subscribe("dji_sdk/attitude", 10, &attitude_callback);
-  ros::Subscriber velocitySub = nh.subscribe("dji_sdk/velocity", 10, &velocity_callback);
-  ros::Subscriber imuSub = nh.subscribe("dji_sdk/imu", 10, &imu_callback);
-  ros::Subscriber localPosition = nh.subscribe("dji_sdk/local_position", 10, &local_position_callback);
+  ros::Subscriber attitudeSub = nh.subscribe("dji_sdk/attitude", 100, &attitude_callback);
+  ros::Subscriber velocitySub = nh.subscribe("dji_sdk/velocity", 100, &velocity_callback);
+  ros::Subscriber imuSub = nh.subscribe("dji_sdk/imu", 100, &imu_callback);
+  ros::Subscriber localPosition = nh.subscribe("dji_sdk/local_position", 100, &local_position_callback);
 
   //Publishers
-  ros::Publisher odom_pub = nh.advertise<nav_msgs::Odometry>("odom", 10);
+  ros::Publisher odom_pub = nh.advertise<nav_msgs::Odometry>("odom", 100);
   tf::TransformBroadcaster odom_broadcaster;
 
   ros::Time current_time, last_time;
   current_time = ros::Time::now();
   last_time = ros::Time::now();
-  ros::Rate r(1.0);
+  ros::Rate r(200.0);
 
   while(nh.ok()){
     ros::spinOnce();               // check for incoming messages
@@ -46,11 +46,11 @@ int main(int argc, char** argv) {
     geometry_msgs::TransformStamped odom_trans;
     odom_trans.header.stamp = current_time;
     odom_trans.header.frame_id = "odom";
-    odom_trans.child_frame_id = "base_link";
+    odom_trans.child_frame_id = "base_stabilized";
 
     odom_trans.transform.translation.x = local_position.point.x;
     odom_trans.transform.translation.y = local_position.point.y;
-    odom_trans.transform.translation.z = local_position.point.z;
+    odom_trans.transform.translation.z = 0.0;
     odom_trans.transform.rotation = odom_quat;
 
     //send the transform
@@ -64,11 +64,11 @@ int main(int argc, char** argv) {
     //set the position
     odom.pose.pose.position.x = local_position.point.x;
     odom.pose.pose.position.y = local_position.point.y;
-    odom.pose.pose.position.z = local_position.point.z;
+    odom.pose.pose.position.z = 0.0;
     odom.pose.pose.orientation = odom_quat;
 
     //set the velocity
-    odom.child_frame_id = "base_link";
+    odom.child_frame_id = "base_stabilized";
     odom.twist.twist.linear.x = current_velocity.vector.x;
     odom.twist.twist.linear.y = current_velocity.vector.y;
     odom.twist.twist.angular.z = current_imu.angular_velocity.z;

@@ -14,7 +14,7 @@
     <remap from="image_rect" to="/guidance_rear/right/image_rect" />
     <remap from="camera_info" to="/guidance_rear/right/camera_info" />
 
-    <param name="camera_frame" type="str" value="guidance_rear" />
+    <param name="camera_frame" type="str" value="guidance_rear_right" />
     <param name="publish_tag_detections_image" type="bool" value="true" />      <!-- default: false -->
   </node>
 </launch>

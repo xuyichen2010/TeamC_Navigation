@@ -9,6 +9,8 @@
 
 #include "base_controller.h"
 #include "dji_sdk/dji_sdk.h"
+#include "tf/transform_broadcaster.h"
+#include "sensor_msgs/Imu.h"
 
 ros::ServiceClient set_local_pos_reference;
 ros::ServiceClient sdk_ctrl_authority_service;
@@ -23,6 +25,21 @@ uint8_t current_gps_health = 0;
 geometry_msgs::Twist cmd_vel;
 sensor_msgs::NavSatFix current_gps_position;
 
+tf::Quaternion tmp_;
+
+#ifndef TF_MATRIX3x3_H
+  typedef btScalar tfScalar;
+  namespace tf { typedef btMatrix3x3 Matrix3x3; }
+#endif
+
+tfScalar yaw, pitch, roll;
+
+void imuMsgCallback(const sensor_msgs::Imu& imu_msg)
+{
+  tf::quaternionMsgToTF(imu_msg.orientation, tmp_);
+  tf::Matrix3x3(tmp_).getRPY(roll, pitch, yaw);
+}
+
 int main(int argc, char** argv) {
   ros::init(argc, argv, "base_controller_node");
   ros::NodeHandle nh;
@@ -31,6 +48,7 @@ int main(int argc, char** argv) {
   ros::Subscriber flightStatusSub = nh.subscribe("dji_sdk/flight_status", 10, &flight_status_callback);
   ros::Subscriber gpsSub          = nh.subscribe("dji_sdk/gps_position", 10, &gps_position_callback);
   ros::Subscriber cmdVelSub       = nh.subscribe("cmd_vel", 10, &cmd_vel_callback);
+  ros::Subscriber imu_subscriber = nh.subscribe("dji_sdk/imu", 100, imuMsgCallback);
 
   // Basic services
   query_version_service      = nh.serviceClient<dji_sdk::QueryDroneVersion>("dji_sdk/query_drone_version");
@@ -56,15 +74,21 @@ int main(int argc, char** argv) {
     ROS_INFO("Take off successful!");
   }
 
-  ros::Rate r(1.0);
+  ros::Rate r(30.0);
   while(nh.ok()){
     ros::spinOnce();
 
     sensor_msgs::Joy controlVelYaw;
-    controlVelYaw.axes.push_back(cmd_vel.linear.x);
-    controlVelYaw.axes.push_back(cmd_vel.linear.y);
+    double x_cmd = cmd_vel.linear.x * cos(yaw) - cmd_vel.linear.y * sin(yaw);
+    double y_cmd = cmd_vel.linear.x * sin(yaw) + cmd_vel.linear.y * cos(yaw);
+    controlVelYaw.axes.push_back(x_cmd);
+    controlVelYaw.axes.push_back(y_cmd);
     controlVelYaw.axes.push_back(0);
     controlVelYaw.axes.push_back(cmd_vel.angular.z);
+    // controlVelYaw.axes.push_back(2);
+    // controlVelYaw.axes.push_back(cmd_vel.linear.y);
+    // controlVelYaw.axes.push_back(0);
+    // controlVelYaw.axes.push_back(2);
     ctrlVelYawPub.publish(controlVelYaw);
 
     r.sleep();
@@ -76,6 +100,12 @@ int main(int argc, char** argv) {
 // ------------------------------------------------------------------------
 void cmd_vel_callback(const geometry_msgs::Twist::ConstPtr& msg) {
   cmd_vel = *msg;
+  ROS_INFO("Linear\n");
+  ROS_INFO("  x: %f\n", cmd_vel.linear.x);
+  ROS_INFO("  y: %f\n", cmd_vel.linear.y);
+  ROS_INFO("Angular:\n");
+  ROS_INFO("  z: %f\n", cmd_vel.angular.z);
+  ROS_INFO("\n");
 }
 
 

@@ -1,0 +1,11 @@
+<launch>
+    <!-- <node pkg="guidance" type="load_calib_file" name="load_calib_file"/> -->
+    <node pkg="dji_m100_gazebo" type="load_calib_file" name="load_calib_file">
+		<param name="front_cam_left_param_file" value="$(find guidance)/calibration_files/front_cam_param/left.yaml" />
+		<param name="front_cam_right_param_file" value="$(find guidance)/calibration_files/front_cam_param/right.yaml" />
+    </node>
+
+    <node ns="guidance_front" pkg="stereo_image_proc" type="stereo_image_proc" name="stereo_image_proc" args="_approximate_sync:=True"/>
+
+</launch>
+<!-- TODO nodes, if launched, don't run somehow.  -->

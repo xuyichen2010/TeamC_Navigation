@@ -26,6 +26,11 @@ link_directories(
 	${GAZEBO_LIRARY_DIRS} ${catkin_LIBRARY_DIRS}
 )
 
+link_libraries(
+  ${catkin_LIBRARIES}
+  yaml-cpp)
+
+
 add_executable(rviz_collision_publisher src/rviz_collision_publisher.cpp)
 target_link_libraries(rviz_collision_publisher ${catkin_LIBRARIES})
 install(TARGETS rviz_collision_publisher
