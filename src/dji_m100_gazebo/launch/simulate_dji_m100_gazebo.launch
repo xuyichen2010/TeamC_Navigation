@@ -34,6 +34,8 @@
 
   <node ns="guidance_front" pkg="stereo_image_proc" type="stereo_image_proc" name="stereo_image_proc" args="_approximate_sync:=True"/>
 
+ <node ns="guidance_down" pkg="stereo_image_proc" type="stereo_image_proc" name="stereo_image_proc" args="_approximate_sync:=True"/>
+
   <arg name="camera" default="guidance_front" />
   <node pkg="pointcloud_to_laserscan" type="pointcloud_to_laserscan_node" name="pointcloud_to_laserscan">
 

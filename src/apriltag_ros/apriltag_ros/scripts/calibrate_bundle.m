@@ -146,7 +146,7 @@ for i = 1:N
         id = this.id(j);
         if ~ismember(id, other_ids)
             other_ids(end+1) = id;
-            other_sizes(end+1) = this.size(j);
+            other_sizes(end+1) = this.size(j);obs
             rel_p{end+1} = [];
             rel_q{end+1} = [];
         end

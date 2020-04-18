@@ -31,10 +31,9 @@ class NavTest():
         locations = []
         locations.append(Pose(Point(0, 2, 0), Quaternion(0.000, 0.000, 0.704, 0.71)))
         locations.append(Pose(Point(0, 10, 0), Quaternion(0.000, 0.000, 0.704, 0.71)))
-        locations.append(Pose(Point(-1.3, 16, 0.000), Quaternion(0.000, 0.000, 0.704, 0.71)))
+        locations.append(Pose(Point(-0.8, 16, 0.000), Quaternion(0.000, 0.000, 0.704, 0.71)))
         locations.append(Pose(Point(1.3, 21, 0.000), Quaternion(0.000, 0.000, 0.704, 0.71)))
-        locations.append(Pose(Point(2.5, 28, 0.000), Quaternion(0.000, 0.000, 0.704, 0.71)))
-        locations.append(Pose(Point(1, 39, 0.000), Quaternion(0.000, 0.000, 0.704, 0.71)))
+        locations.append(Pose(Point(0, 30, 0.000), Quaternion(0.000, 0.000, 0.704, 0.71)))
 
         # 发布控制机器人的消息
         self.cmd_vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size=5)
@@ -73,7 +72,7 @@ class NavTest():
         while not rospy.is_shutdown():
             # 如果已经走完了所有点，再重新开始排序
             sequence = locations
-            if i == 5:
+            if i == n_locations:
                 rospy.loginfo("Finished!.")
                 self.reach_goal_pub.publish(True)
                 self.shutdown()
@@ -117,7 +116,7 @@ class NavTest():
             self.move_base.send_goal(self.goal)
 
             # 五分钟时间限制
-            finished_within_time = self.move_base.wait_for_result(rospy.Duration(300))
+            finished_within_time = self.move_base.wait_for_result(rospy.Duration(20))
 
             # 查看是否成功到达
             if not finished_within_time:

@@ -174,9 +174,8 @@ bool M100monitoredTakeoff() {
     ros::Duration(0.01).sleep();
     ros::spinOnce();
   }
-
-  if(flight_status != DJISDK::M100FlightStatus::M100_STATUS_IN_AIR ||
-    current_gps_position.altitude - home_altitude < 1.0)
+ ROS_INFO("flight_status:%d \n", flight_status);
+  if(flight_status != DJISDK::M100FlightStatus::M100_STATUS_IN_AIR)
     {
       ROS_ERROR("Takeoff failed.");
       return false;

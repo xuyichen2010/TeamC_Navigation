@@ -500,5 +500,8 @@
         <projection_type>perspective</projection_type>
       </camera>
     </gui>
+   <include>
+      <uri>model://Apriltag36_11_00000</uri>
+    </include>
   </world>
 </sdf>
