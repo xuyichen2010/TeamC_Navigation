@@ -2,7 +2,7 @@
 <sdf version='1.6'>
   <model name='Apriltag36_11_00000'>
     <link name='main'>
-    <pose frame='odom'>0 30 0 0 0 0</pose>
+    <pose frame='odom'>0 0 0 0 0 0</pose>
       <visual name='main_Visual'>
         <geometry>
           <box>

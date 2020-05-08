@@ -1,0 +1,12 @@
+ <launch>
+ 	<include file="$(find apriltag_ros)/launch/continuous_detection.launch">
+ 		<arg name="image_rect_topic" default="/guidance_down/left/image_rect" />
+		<arg name="camera_info_topic" default="/guidance_down/left/camera_info" />
+		<arg name="camera_frame" default="guidance_down" />
+ 	</include>
+
+    <node name="track_apriltag_landing" pkg="dji_m100_landing" type="track_apriltag_landing" output="screen" >
+    <param name="apriltags_36h11_sub" value="/tag_detections" />
+    </node>
+
+ </launch>

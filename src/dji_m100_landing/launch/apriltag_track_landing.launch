@@ -4,8 +4,70 @@
 		<arg name="camera_info_topic" default="/guidance_down/left/camera_info" />
 		<arg name="camera_frame" default="guidance_down" />
  	</include>
- 	
-    <node name="track_apriltag_landing" pkg="dji_m100_landing" type="track_apriltag_landing" output="screen" >
-    <param name="apriltags_36h11_sub" value="/tag_detections" />    
+
+    <node name="track_apriltag_landing_velocity" pkg="dji_m100_landing" type="track_apriltag_landing_velocity" output="screen" >
+    <param name="apriltags_36h11_sub" value="/tag_detections" />
     </node>
+
+    <node pkg="dji_m100_landing" type="position_track_velocity_controller" name="position_track_velocity_controller_node" output="screen">
+      </node>
+
+    <node ns="dji_m100_landing" name="position_track_pid_velocity_x_controller" pkg="pid" type="controller">
+      <param name="node_name" value="apriltag_tracking_x_controller" />
+      <param name="Kp" value="12" />
+      <param name="Ki" value="0.4" />
+      <param name="Kd" value="10" />
+      <param name="P" value="1" />
+      <param name="Q" value="0.00005" />
+      <param name="R" value="1" />
+      <param name="converge_threshold" value="0.05" />
+      <param name="upper_limit" value="0.015" />
+      <param name="lower_limit" value="-0.015" />
+      <param name="windup_limit" value="20" />
+      <param name="cutoff_frequency" value="20" />
+      <param name="diagnostic_period" value="0.25" />
+      <param name="max_loop_frequency" value="105.0" />
+      <param name="min_loop_frequency" value="95.0" />
+      <remap from="setpoint" to="/teamc/position_track_x/setpoint" />
+      <param name="topic_from_plant" value="/teamc/position_track_x/state" />
+      <param name="topic_from_controller" value="/teamc/position_track_x/control_effort" />
+     </node>
+
+    <node ns="dji_m100_landing" name="position_track_pid_velocity_y_controller" pkg="pid" type="controller"  >
+      <param name="node_name" value="apriltag_tracking_y_controller" />
+      <param name="Kp" value="12" />
+      <param name="Ki" value="0.4" />
+      <param name="Kd" value="10" />
+      <param name="converge_threshold" value="0.05" />
+      <param name="upper_limit" value="0.015" />
+      <param name="lower_limit" value="-0.015" />
+      <param name="windup_limit" value="10" />
+      <param name="cutoff_frequency" value="20" />
+      <param name="max_loop_frequency" value="105.0" />
+      <param name="min_loop_frequency" value="95.0" />
+      <remap from="setpoint" to="/teamc/position_track_y/setpoint" />
+      <param name="topic_from_plant" value="/teamc/position_track_y/state" />
+      <param name="topic_from_controller" value="/teamc/position_track_y/control_effort" />
+    </node>
+
+
+
+
+    <node ns="dji_m100_landing" name="position_track_pid_yaw_controller" pkg="pid" type="controller" >
+      <param name="node_name" value="apriltag_tracking_yaw_controller" />
+      <param name="Kp" value="0.9" />
+      <param name="Ki" value="0.015" />
+      <param name="Kd" value="0.1" />
+      <param name="converge_threshold" value="1" />
+      <param name="upper_limit" value="0.15" />
+      <param name="lower_limit" value="-0.15" />
+      <param name="windup_limit" value="5" />
+      <param name="cutoff_frequency" value="20" />
+      <param name="diagnostic_period" value="0.25" />
+      <param name="max_loop_frequency" value="105.0" />
+      <param name="min_loop_frequency" value="95.0" />
+      <remap from="setpoint" to="/teamc/position_track_yaw/setpoint" />
+      <param name="topic_from_plant" value="/teamc/position_track_yaw/state" />
+      <param name="topic_from_controller" value="/teamc/position_track_yaw/control_effort" />
+     </node>
  </launch>

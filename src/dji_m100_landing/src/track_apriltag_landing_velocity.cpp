@@ -1,3 +1,4 @@
+
 #include <ros/ros.h>
 #include <geometry_msgs/PoseArray.h>
 #include <geometry_msgs/PointStamped.h>
@@ -25,6 +26,8 @@
 
 #include "dji_sdk/dji_sdk.h"
 #include <dji_sdk/DroneTaskControl.h>
+#include "tf/transform_broadcaster.h"
+#include "sensor_msgs/Imu.h"
 
 
 ros::Subscriber apriltags_36h11_sub;
@@ -34,7 +37,16 @@ ros::Subscriber attitude_quaternion_sub;
 ros::Subscriber flight_status_sub;
 ros::Subscriber global_position_sub;
 
-ros::Publisher ctrlPosYawPub;
+ros::Publisher setpoint_x_pub;
+ros::Publisher setpoint_y_pub;
+ros::Publisher setpoint_yaw_pub;
+ros::Publisher found_april_tag_pub;
+ros::Publisher yaw_state_pub;
+ros::Publisher x_state_pub;
+ros::Publisher y_state_pub;
+ros::Publisher z_state_pub;
+ros::Publisher z_control_pub;
+
 
 ros::ServiceClient drone_task_service;
 
@@ -69,8 +81,33 @@ std::string tag_36h11_detection_topic;
 
 bool found_36h11 = false;
 bool landing_enabled = false;
-bool during_landing = false;
-bool continue_landing = false;
+
+std_msgs::Float64 setpoint_x_msg;
+std_msgs::Float64 setpoint_y_msg;
+std_msgs::Float64 control_z_msg;
+std_msgs::Float64 setpoint_yaw_msg;
+std_msgs::Bool found_tag_msg;
+
+std_msgs::Float64 x_state_msg;
+std_msgs::Float64 y_state_msg;
+std_msgs::Float64 z_state_msg;
+std_msgs::Float64 yaw_state_msg;
+
+
+tf::Quaternion tmp_;
+
+#ifndef TF_MATRIX3x3_H
+  typedef btScalar tfScalar;
+  namespace tf { typedef btMatrix3x3 Matrix3x3; }
+#endif
+
+tfScalar yaw, pitch, roll;
+
+void imuMsgCallback(const sensor_msgs::Imu& imu_msg)
+{
+  tf::quaternionMsgToTF(imu_msg.orientation, tmp_);
+  tf::Matrix3x3(tmp_).getRPY(roll, pitch, yaw);
+}
 
 
 void apriltags36h11Callback(const apriltag_ros::AprilTagDetectionArray::ConstPtr& apriltag_pos_msg)
@@ -126,6 +163,7 @@ void flightStatusCallback(const std_msgs::UInt8& flight_status_msg)
   flight_status = (int)flight_status_msg.data;
 }
 
+
 void print_parameters()
 {
   ROS_INFO("Listening to 36h11 apriltag detection topic: %s", tag_36h11_detection_topic.c_str());
@@ -133,20 +171,7 @@ void print_parameters()
   ROS_INFO("landing_center_threshold: %f", landing_center_threshold);
 }
 
-bool land()
-{
-  ROS_INFO("land().");
-  dji_sdk::DroneTaskControl droneTaskControl;
-  droneTaskControl.request.task = dji_sdk::DroneTaskControl::Request::TASK_LAND;
-  drone_task_service.call(droneTaskControl);
-  if(!droneTaskControl.response.result)
-  {
-    ROS_ERROR("landing fail");
-    return false;
-  }
-  ROS_INFO("Return TRue.");
-  return true;
-}
+
 
 int main(int argc, char **argv)
 {
@@ -161,17 +186,25 @@ int main(int argc, char **argv)
 
   print_parameters();
 
+  setpoint_x_pub = nh.advertise<std_msgs::Float64>("/teamc/position_track_x/setpoint", 100);
+  setpoint_y_pub = nh.advertise<std_msgs::Float64>("/teamc/position_track_y/setpoint", 100);
+  setpoint_yaw_pub = nh.advertise<std_msgs::Float64>("/teamc/position_track_yaw/setpoint", 100);
+  found_april_tag_pub = nh.advertise<std_msgs::Bool>("/teamc/found_april_tag_pub", 10);
+  yaw_state_pub = nh.advertise<std_msgs::Float64>("/teamc/position_track_yaw/state", 10);
+  x_state_pub = nh.advertise<std_msgs::Float64>("/teamc/position_track_x/state", 100);
+  y_state_pub = nh.advertise<std_msgs::Float64>("/teamc/position_track_y/state", 100);
+  z_state_pub = nh.advertise<std_msgs::Float64>("/teamc/position_track_z/state", 100);
+  z_control_pub = nh.advertise<std_msgs::Float64>("/teamc/position_track_z/control_effort", 100);
+
   apriltags_36h11_sub = nh.subscribe(tag_36h11_detection_topic, 1, apriltags36h11Callback);
   local_position_sub = nh.subscribe("dji_sdk/local_position", 10, localPositionCallback);
   attitude_quaternion_sub = nh.subscribe("/dji_sdk/attitude", 1, attitudeQuaternionCallback );
   flight_status_sub = nh.subscribe("/dji_sdk/flight_status", 1, flightStatusCallback);
   global_position_sub = nh.subscribe("/dji_sdk/gps_position", 10, globalPositionCallback);
-
   landing_enable_sub = nh.subscribe("/dji_landing/landing_enable", 1, landingEnableCallback );
+  ros::Subscriber imu_subscriber = nh.subscribe("dji_sdk/imu", 100, imuMsgCallback);
 
-  ctrlPosYawPub = nh.advertise<sensor_msgs::Joy>("dji_sdk/flight_control_setpoint_ENUposition_yaw", 10);
 
-  drone_task_service = nh.serviceClient<dji_sdk::DroneTaskControl>("dji_sdk/drone_task_control");
 
   tag_36h11_0 = new Tag();
   // Set the translation between camera and landing center
@@ -185,7 +218,7 @@ int main(int argc, char **argv)
 
   Eigen::Vector3d landing_center_position;
 
-  ros::Rate loop_rate(10);
+  ros::Rate loop_rate(100);
 
   ros::spinOnce();
 
@@ -199,7 +232,7 @@ int main(int argc, char **argv)
     // Check if the UAV is currently in air, if not in air, then UAV cannot land
     if(flight_status != DJISDK::M100FlightStatus::M100_STATUS_IN_AIR)
     {
-      ROS_ERROR("The UAV is not in air, landing cannot start!");
+      ROS_ERROR_ONCE("The UAV is not in air, landing cannot start!");
       continue;
     }
 
@@ -207,6 +240,8 @@ int main(int argc, char **argv)
     if(landing_enabled)
     {
       ROS_INFO_ONCE("Landing is enabled.");
+      found_tag_msg.data = found_36h11;
+      found_april_tag_pub.publish(found_tag_msg);
       // Found apriltag, start landing
       if(found_36h11)
       {
@@ -218,94 +253,68 @@ int main(int argc, char **argv)
         landing_center_position = tag_36h11_0->getLandingCenterPosition();
 
         // get the landing center yaw error
-        yaw_error = (tag_36h11_0->getYawError())/ M_PI * 180;
+        yaw_error = (tag_36h11_0->getYawError())/ M_PI * 180 - 90;
 
-        // Convert the x,y position from local frame to ground NEU frame
         double yaw_angle_radian = (yaw_state/180)* M_PI;
-        double delta_x = landing_center_position(0)*cos(yaw_angle_radian) - landing_center_position(1)*sin(yaw_angle_radian);
-        double delta_y = landing_center_position(0)*sin(yaw_angle_radian) + landing_center_position(1)*cos(yaw_angle_radian);
+        double delta_x = landing_center_position(0)*cos(yaw) - landing_center_position(1)*sin(yaw);
+        double delta_y = landing_center_position(0)*sin(yaw) + landing_center_position(1)*cos(yaw);
+
+        if(sqrt(pow(delta_x, 2) + pow(delta_y, 2)) > 0.15)
+  			{
+  				control_z_msg.data = local_z;
+  			}
+  			else{
+  				control_z_msg.data = std::max(0.0, local_z-1.0);
+    			//control_z_msg.data = local_z;
+  			}
+        double old_x = landing_center_position(0)*cos(yaw_angle_radian) - landing_center_position(1)*sin(yaw_angle_radian);
+        double old_y = landing_center_position(0)*sin(yaw_angle_radian) + landing_center_position(1)*cos(yaw_angle_radian);
+        setpoint_x = delta_x + local_x;
+        setpoint_y = delta_y + local_y;
+        setpoint_yaw = yaw_state + yaw_error;
+        setpoint_yaw = 90;
 
         // Set the Joy message and publish to flight_control_setpoint_ENUposition_yaw topic
-        setpoint_x = delta_x;
-        setpoint_y = delta_y;
-        setpoint_yaw = yaw_state + yaw_error;
 
-        // Move above the tag first, then land
-        if(sqrt(pow(delta_x, 2) + pow(delta_y, 2)) > landing_center_threshold)
-        {
-          setpoint_z = flight_height;
-          ROS_INFO("Not Land: ");
-          ROS_INFO_STREAM(sqrt(pow(delta_x, 2) + pow(delta_y, 2)));
-        }
-        else{
-          //setpoint_z = landing_center_position(2) + local_z;
-          ROS_INFO("landing_center_position(2)");
-          ROS_INFO_STREAM(landing_center_position(2));
-          ROS_INFO("local_z.");
-          ROS_INFO_STREAM(local_z);
-          setpoint_z = landing_center_position(2);
-        }
+        // setpoint_yaw = 0;
 
-        sensor_msgs::Joy controlPosYaw;
-        controlPosYaw.axes.push_back(setpoint_x);
-        controlPosYaw.axes.push_back(setpoint_y);
-        controlPosYaw.axes.push_back(local_z);
-        controlPosYaw.axes.push_back(setpoint_yaw);
-        ctrlPosYawPub.publish(controlPosYaw);
+        // setpoint_x_msg.data = 0;
+        // setpoint_y_msg.data = 0.5;
+        // double delta_x = local_x - setpoint_x_msg.data;
+        // double delta_y = local_y - setpoint_y_msg.data;
+        //
+        // if(sqrt(pow(delta_x, 2) + pow(delta_y, 2)) > 0.15)
+  			// {
+  			// 	control_z_msg.data = local_z;
+  			// }
+  			// else{
+  			// 	control_z_msg.data = std::max(0.0, local_z-1.0);
+  			// }
 
-        ROS_INFO("The x offset, y offset, z, yaw in ground frame of apriltag.");
-        ROS_INFO_STREAM(setpoint_x);
-        ROS_INFO_STREAM(setpoint_y);
-        ROS_INFO_STREAM(setpoint_z);
-        ROS_INFO_STREAM(setpoint_yaw);
+        setpoint_yaw_msg.data = setpoint_yaw;
+        setpoint_x_msg.data = setpoint_x;
+        setpoint_y_msg.data = setpoint_y;
 
-        during_landing = true;
-        continue_landing = true;
-      }
-      else
-      {
-        if (during_landing)
-        {
-          ROS_INFO_ONCE("Lost apriltag during landing!");
-          ROS_INFO_STREAM(local_z);
-          // If height is very low, start dji landing
-          if (local_z <= landing_height_threshold)
-          {
-            if (land())
-            {
-              ROS_INFO_ONCE("Continue landing.");
-              if(flight_status == DJISDK::M100FlightStatus::M100_STATUS_ON_GROUND)
-              {
-                ROS_INFO_ONCE("Successful landing!");
-                during_landing = false;
-                continue_landing = false;
-              }
-            }
-          }
-          // continue to fly towards the last target pose, only once
-          else
-          {
-            if (continue_landing)
-            {
-              sensor_msgs::Joy controlPosYaw;
-              controlPosYaw.axes.push_back(setpoint_x);
-              controlPosYaw.axes.push_back(setpoint_y);
-              controlPosYaw.axes.push_back(setpoint_z);
-              controlPosYaw.axes.push_back(setpoint_yaw);
-              ctrlPosYawPub.publish(controlPosYaw);
-            }
-            during_landing = false;
-            continue_landing = false;
-          }
-        }
-        else
-        {
-          ROS_ERROR_ONCE("No apriltag found, landing suspend!");
-        }
-      }
+        z_control_pub.publish(control_z_msg);
 
-      if(flight_status == DJISDK::M100FlightStatus::M100_STATUS_FINISHED_LANDING){
-        ROS_INFO_ONCE("Successful landing!");
+        setpoint_x_pub.publish(setpoint_x_msg);
+        setpoint_y_pub.publish(setpoint_y_msg);
+        setpoint_yaw_pub.publish(setpoint_yaw_msg);
+
+        x_state_msg.data = local_x;
+        y_state_msg.data = local_y;
+        z_state_msg.data = local_z;
+        yaw_state_msg.data = yaw_state;
+
+        x_state_pub.publish(x_state_msg);
+        y_state_pub.publish(y_state_msg);
+        z_state_pub.publish(z_state_msg);
+        yaw_state_pub.publish(yaw_state_msg);
+
+				ROS_INFO_STREAM("setpoint_x: " << setpoint_x_msg.data << " setpoint_y: " << setpoint_y_msg.data);
+        ROS_INFO_STREAM("local_x: " << local_x << " local_y: " << local_y);
+        ROS_INFO_STREAM("delta_x: " << delta_x << " delta_y: " << delta_y);
+        ROS_INFO_STREAM("yaw_state: " << yaw_state_msg.data << " yaw_error: " << yaw_error);
       }
 
       loop_rate.sleep();

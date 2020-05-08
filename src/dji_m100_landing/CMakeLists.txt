@@ -143,6 +143,8 @@ include_directories(include
 
 add_executable(track_apriltag_landing src/track_apriltag_landing.cpp src/tag.cpp)
 add_dependencies(track_apriltag_landing dji_sdk_generate_messages_cpp)
+add_executable(track_apriltag_landing_velocity src/track_apriltag_landing_velocity.cpp src/tag.cpp)
+add_dependencies(track_apriltag_landing_velocity dji_sdk_generate_messages_cpp)
 
 add_executable(position_track_state_publisher src/position_track_state_publisher.cpp)
 add_executable(position_track_velocity_controller src/position_track_velocity_controller.cpp)
@@ -158,10 +160,16 @@ add_executable(position_track_velocity_controller src/position_track_velocity_co
 # target_link_libraries(hku_m100_landing_node
 #   ${catkin_LIBRARIES}
 # )
+target_link_libraries(track_apriltag_landing_velocity
+  ${catkin_LIBRARIES}
+${DJIOSDK_LIBRARIES}
+)
+
 target_link_libraries(track_apriltag_landing
   ${catkin_LIBRARIES}
 ${DJIOSDK_LIBRARIES}
 )
+
 
 target_link_libraries(position_track_state_publisher
   ${catkin_LIBRARIES}
@@ -169,6 +177,7 @@ target_link_libraries(position_track_state_publisher
 
 target_link_libraries(position_track_velocity_controller
   ${catkin_LIBRARIES}
+${DJIOSDK_LIBRARIES}
 )
 
 #target_link_libraries(yaw_rate_test
